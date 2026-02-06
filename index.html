@@ -3,90 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIT Kelly Calculator | Việt BOHO</title>
+    <title>JIT Terminal Pro | Việt BOHO</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .card { background: #1e293b; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        input { background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 10px; color: white; width: 100%; }
-        .result-box { border-left: 4px solid #38bdf8; background: #0c4a6e; }
+        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; height: 100-vh; overflow: hidden; }
+        .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s; }
+        .glass-card:hover { border-color: rgba(14, 165, 233, 0.4); }
+        input { background: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 6px 12px; color: white; width: 100%; font-size: 14px; outline: none; }
+        input:focus { border-color: #0ea5e9; }
+        .label-xs { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-bold mb-6 text-sky-400 flex items-center gap-2">
-            📊 JIT Kelly Dashboard 🚀
-        </h1>
-        
-        <div class="card p-6 space-y-4">
-            <div>
-                <label class="block text-sm mb-1">Xác suất thắng (p) - %</label>
-                <input type="number" id="winRate" value="60" placeholder="Ví dụ: 60">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm mb-1">Giá mục tiêu (Target)</label>
-                    <input type="number" id="target" value="32" step="0.1">
-                </div>
-                <div>
-                    <label class="block text-sm mb-1">Giá cắt lỗ (Stoploss)</label>
-                    <input type="number" id="stoploss" value="26.5" step="0.1">
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm mb-1">Giá vào lệnh (Entry)</label>
-                <input type="number" id="entry" value="28" step="0.1">
-            </div>
+<body class="flex flex-col h-screen">
 
-            <button onclick="calculate()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-lg transition">
-                TÍNH TOÁN VỊ THẾ 📈
-            </button>
-
-            <div id="result" class="hidden mt-6 p-4 result-box rounded-lg space-y-2">
-                <p class="text-sm">Tỷ lệ Lời/Lỗ (b): <span id="odds" class="font-bold text-yellow-400">0</span></p>
-                <p class="text-lg">Tỷ lệ Kelly: <span id="kelly" class="font-bold text-green-400">0%</span></p>
-                <p class="text-lg">Khuyên dùng (Half-Kelly): <span id="halfKelly" class="font-bold text-sky-400">0%</span></p>
-                <p id="advice" class="text-xs italic text-gray-400 mt-2"></p>
+    <nav class="h-14 border-b border-slate-800 flex justify-between items-center px-4 bg-slate-900/80">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">⚡</span>
+            <div>
+                <h1 class="font-black text-sky-400 leading-none">JIT TERMINAL <span class="text-white font-light text-[10px] ml-1">V3.0 PRO</span></h1>
+                <p class="text-[9px] text-slate-500">SYSTEM FOR VIET BOHO • 5B TARGET</p>
             </div>
         </div>
+        <div class="flex gap-6 items-center">
+            <div class="text-right">
+                <p class="label-xs text-yellow-500">Tổng NAV (VNĐ)</p>
+                <input type="number" id="totalNAV" value="1000000000" class="bg-transparent border-none p-0 text-right font-bold text-lg text-white w-40 focus:ring-0" onchange="saveAndRender()">
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
         
-        <p class="text-center text-gray-500 text-xs mt-8">Build for Việt BOHO - Costing Team Lead 🛠️</p>
-    </div>
+        <div class="flex-1 bg-black relative border-r border-slate-800">
+            <div id="tradingview_widget" class="h-full w-full"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript">
+            new TradingView.widget({
+              "autosize": true,
+              "symbol": "HOSE:HPG",
+              "interval": "D",
+              "timezone": "Asia/Ho_Chi_Minh",
+              "theme": "dark",
+              "style": "1",
+              "locale": "vi",
+              "container_id": "tradingview_widget"
+            });
+            </script>
+        </div>
+
+        <div class="w-full md:w-[400px] flex flex-col bg-slate-950/50">
+            
+            <div class="p-4 border-b border-slate-800 space-y-4 bg-slate-900/20">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label-xs">Mã CK</label>
+                        <input type="text" id="symbol" placeholder="VD: SSI" class="uppercase font-bold">
+                    </div>
+                    <div>
+                        <label class="label-xs">Win Rate JIT (%)</label>
+                        <input type="number" id="winRate" value="60">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="label-xs">Entry</label>
+                        <input type="number" id="entry" value="28.0" step="0.1">
+                    </div>
+                    <div>
+                        <label class="label-xs">Target</label>
+                        <input type="number" id="target" value="32.0" step="0.1">
+                    </div>
+                    <div>
+                        <label class="label-xs">Stoploss</label>
+                        <input type="number" id="stoploss" value="26.5" step="0.1">
+                    </div>
+                </div>
+                <button onclick="addPortfolio()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-extrabold py-3 rounded shadow-lg shadow-sky-900/20 transition-all uppercase text-sm">
+                    Tính Toán & Thêm Vị Thế
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="label-xs text-slate-400">Danh mục đang quản lý (Tối đa 5-8 mã)</h3>
+                    <span id="countMã" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0 mã</span>
+                </div>
+                
+                <div id="portfolioList" class="space-y-3">
+                    </div>
+            </div>
+
+            <div class="p-3 bg-slate-900 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between">
+                <span>Rule 1: Thua tối đa 1% NAV</span>
+                <span>Rule 2: Half-Kelly for Safety</span>
+            </div>
+        </div>
+    </main>
 
     <script>
-        function calculate() {
-            const p = document.getElementById('winRate').value / 100;
-            const target = document.getElementById('target').value;
-            const stoploss = document.getElementById('stoploss').value;
-            const entry = document.getElementById('entry').value;
+        let portfolio = JSON.parse(localStorage.getItem('jitPortfolio')) || [];
+        
+        function calculateKelly(p, b) {
+            let f = (p * (b + 1) - 1) / b;
+            return f > 0 ? f : 0;
+        }
 
-            const reward = target - entry;
-            const risk = entry - stoploss;
-            
-            if (risk <= 0) {
-                alert("Giá cắt lỗ phải thấp hơn giá vào lệnh!");
+        function addPortfolio() {
+            const sym = document.getElementById('symbol').value.toUpperCase();
+            const nav = parseFloat(document.getElementById('totalNAV').value);
+            const p = document.getElementById('winRate').value / 100;
+            const ent = parseFloat(document.getElementById('entry').value);
+            const tg = parseFloat(document.getElementById('target').value);
+            const sl = parseFloat(document.getElementById('stoploss').value);
+
+            if(!sym || isNaN(ent) || isNaN(sl) || ent <= sl) {
+                alert("Kiểm tra lại thông số đầu vào Việt ơi!");
                 return;
             }
 
+            const reward = tg - ent;
+            const risk = ent - sl;
             const b = reward / risk;
-            const f = (p * (b + 1) - 1) / b;
-            
-            document.getElementById('result').classList.remove('hidden');
-            document.getElementById('odds').innerText = b.toFixed(2);
-            
-            const kellyVal = (f * 100).toFixed(2);
-            document.getElementById('kelly').innerText = (f > 0 ? kellyVal : 0) + "%";
-            document.getElementById('halfKelly').innerText = (f > 0 ? (kellyVal / 2).toFixed(2) : 0) + "%";
-            
-            const advice = document.getElementById('advice');
-            if (f <= 0) {
-                advice.innerText = "❌ Kèo này xác suất/tỷ lệ không tốt. Bỏ qua!";
-                advice.className = "text-xs italic text-red-400 mt-2";
-            } else {
-                advice.innerText = "✅ Kèo đạt chuẩn JIT. Hãy quản trị vốn chặt chẽ!";
-                advice.className = "text-xs italic text-green-400 mt-2";
-            }
+            const k = calculateKelly(p, b);
+
+            const newItem = {
+                id: Date.now(),
+                sym, p, ent, tg, sl, b, k
+            };
+
+            portfolio.unshift(newItem);
+            saveAndRender();
         }
+
+        function deleteItem(id) {
+            portfolio = portfolio.filter(i => i.id !== id);
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('jitPortfolio', JSON.stringify(portfolio));
+            const nav = parseFloat(document.getElementById('totalNAV').value);
+            const list = document.getElementById('portfolioList');
+            const riskAmount = nav * 0.01; // Rủi ro tối đa 1% NAV
+
+            document.getElementById('countMã').innerText = `${portfolio.length} mã`;
+            
+            list.innerHTML = portfolio.map(i => {
+                // 1. Tính theo quy tắc 1% NAV: Q = 1% NAV / (Entry - Stoploss)
+                const lossPerShare = i.ent - i.sl;
+                const quantity1Percent = Math.floor(riskAmount / (lossPerShare * 1000)) * 1000;
+                const value1Percent = quantity1Percent * i.ent * 1000;
+
+                // 2. Tính theo Kelly (Half-Kelly)
+                const halfKellyValue = nav * (i.k * 0.5);
+
+                return `
+                <div class="glass-card p-4 rounded-xl border-l-4 ${i.k > 0 ? 'border-sky-500' : 'border-red-500'}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-xl font-black text-white">${i.sym}</span>
+                            <span class="text-[10px] ml-2 text-slate-500 italic">R/R: 1:${i.b.toFixed(1)}</span>
+                        </div>
+                        <button onclick="deleteItem(${i.id})" class="text-slate-600 hover:text-red-500 transition">✕</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-3">
+                        <div>
+                            <p class="label-xs text-emerald-400">Khối lượng (An toàn 1%)</p>
+                            <p class="text-lg font-bold">${quantity1Percent.toLocaleString()} <span class="text-[10px] font-normal text-slate-500 text-xs">CP</span></p>
+                            <p class="text-[10px] text-slate-500">≈ ${(value1Percent/1000000).toFixed(1)} Triệu</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="label-xs text-sky-400">Kelly Size (50% f)</p>
+                            <p class="text-lg font-bold text-sky-400">${(i.k * 50).toFixed(1)}%</p>
+                            <p class="text-[10px] text-slate-500">≈ ${(halfKellyValue/1000000).toFixed(1)} Triệu</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-between items-center bg-black/30 p-2 rounded">
+                        <span class="text-[9px] text-slate-400">Entry: ${i.ent}</span>
+                        <span class="text-[9px] text-slate-400">Target: ${i.tg}</span>
+                        <span class="text-[9px] text-red-400 font-bold">SL: ${i.sl}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Khởi tạo
+        saveAndRender();
     </script>
 </body>
 </html>
