@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIT Terminal Auto | Việt BOHO</title>
+    <title>JIT Terminal Pro | Việt BOHO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -16,9 +16,12 @@
         .tab-btn.active { @apply text-sky-400 border-sky-400 bg-slate-900/50; }
         .tab-content { display: none; height: 100%; }
         .tab-content.active { display: flex; flex-direction: column; }
-        .price-up { color: #34d399; }
-        .price-down { color: #f87171; }
-        .price-ref { color: #fbbf24; }
+        .text-up { color: #34d399; } .text-down { color: #f87171; } .text-ref { color: #fbbf24; }
+        
+        /* Loading Animation */
+        .loader { border: 2px solid #1e293b; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 12px; height: 12px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
@@ -27,21 +30,22 @@
 
     <nav class="h-12 border-b border-slate-800 flex justify-between items-center px-4 bg-[#0b1121]">
         <div class="flex items-center gap-2">
-            <span class="text-xl animate-pulse">🔴</span>
-            <h1 class="font-black text-sky-400 text-sm tracking-widest">JIT LIVE <span class="text-white opacity-50 font-light">V5.0</span></h1>
+            <span class="text-xl">⚡</span>
+            <h1 class="font-black text-sky-400 text-sm tracking-widest">JIT PRO <span class="text-white opacity-50 font-light">V5.1 FIX</span></h1>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="updatePrices()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded flex items-center gap-1">
-                🔄 CẬP NHẬT GIÁ
+            <span id="status-light" class="w-2 h-2 rounded-full bg-red-500" title="Trạng thái kết nối"></span>
+            <button onclick="updatePrices()" class="bg-blue-700 hover:bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded flex items-center gap-2 transition">
+                <span id="btn-icon">🔄</span> UPDATE
             </button>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 border-l border-slate-700 pl-3">
                 <span class="text-[10px] text-slate-500">NAV:</span>
                 <input type="number" id="totalNAV" value="1000000000" class="bg-transparent border-none p-0 text-right font-bold text-yellow-500 w-24 text-sm focus:ring-0" onchange="saveConfig()">
             </div>
         </div>
     </nav>
 
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         <div class="flex-[2] bg-black border-r border-slate-800 relative h-full hidden md:block">
             <div id="tradingview_widget" class="h-full w-full"></div>
              <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -58,23 +62,24 @@
             </div>
 
             <div id="view-hunter" class="tab-content active p-5 space-y-4 overflow-y-auto">
-                <div class="bg-slate-800/50 p-4 rounded border border-slate-700">
-                    <h3 class="text-sky-400 font-bold text-sm mb-3">TÍNH TOÁN VỊ THẾ</h3>
+                <div class="bg-slate-800/40 p-4 rounded border border-slate-700">
+                    <h3 class="text-sky-400 font-bold text-sm mb-3 uppercase tracking-wider">Nhập Setup JIT</h3>
                     <div class="space-y-3">
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="label-xs">Mã CK</label><input type="text" id="symbol" placeholder="VD: HPG" class="uppercase font-bold"></div>
+                            <div><label class="label-xs">Mã CK</label><input type="text" id="symbol" placeholder="VD: HPG" class="uppercase font-bold tracking-wider"></div>
                             <div><label class="label-xs">Win Rate %</label><input type="number" id="winRate" value="60"></div>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
-                            <div><label class="label-xs text-slate-400">Entry</label><input type="number" id="entry" step="0.1"></div>
-                            <div><label class="label-xs text-emerald-400">Target</label><input type="number" id="target" step="0.1"></div>
-                            <div><label class="label-xs text-rose-400">Stoploss</label><input type="number" id="stoploss" step="0.1"></div>
+                            <div><label class="label-xs text-slate-400">Entry</label><input type="number" id="entry" step="0.05"></div>
+                            <div><label class="label-xs text-emerald-400">Target</label><input type="number" id="target" step="0.05"></div>
+                            <div><label class="label-xs text-rose-400">Stoploss</label><input type="number" id="stoploss" step="0.05"></div>
                         </div>
                     </div>
-                    <button onclick="addToWatchlist()" class="w-full mt-4 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded shadow-lg text-xs uppercase">
-                        + Theo dõi
+                    <button onclick="addToWatchlist()" class="w-full mt-4 bg-gradient-to-r from-sky-700 to-blue-700 hover:from-sky-600 text-white font-bold py-3 rounded shadow-lg text-xs uppercase transform active:scale-95 transition">
+                        + Thêm vào Watchlist
                     </button>
                 </div>
+                <div id="error-log" class="text-[10px] text-red-400 text-center hidden"></div>
             </div>
 
             <div id="view-watchlist" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
@@ -82,58 +87,89 @@
             </div>
 
             <div id="view-portfolio" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
-                 <div class="flex justify-between px-1"><span class="label-xs text-slate-400">Lãi/Lỗ tạm tính</span><span id="total-pnl" class="text-xs font-bold text-white">---</span></div>
+                 <div class="flex justify-between px-1 border-b border-slate-800 pb-2 mb-2">
+                     <span class="label-xs text-slate-400">Tổng PnL tạm tính</span>
+                     <span id="total-pnl" class="text-sm font-bold text-white">---</span>
+                 </div>
                 <div id="portfolio-container" class="space-y-3 pb-10"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // --- ⚠️ DÁN URL APPS SCRIPT CỦA VIỆT VÀO ĐÂY ---
-        const API_URL = https://script.google.com/macros/s/AKfycbwzQambKv1QOa8CdPRbBvbp7JSwCtgiZQuKN0ZRnKEK8Z_7SbuuEyQAX9cbVgRmhAc2fA/exec; 
-        // Ví dụ: https://script.google.com/macros/s/AKfycbx.../exec
+        // ==========================================
+        // ⚠️ THAY LINK APPS SCRIPT MỚI VÀO ĐÂY ⚠️
+        const API_URL = https://script.google.com/macros/s/AKfycbwzQambKv1QOa8CdPRbBvbp7JSwCtgiZQuKN0ZRnKEK8Z_7SbuuEyQAX9cbVgRmhAc2fA/exec;
+        // ==========================================
 
         let watchlist = JSON.parse(localStorage.getItem('jitWatchlist')) || [];
         let portfolio = JSON.parse(localStorage.getItem('jitPortfolio')) || [];
-        let marketData = {}; // Chứa giá realtime
+        let marketData = {}; 
 
         // INIT
         if(localStorage.getItem('jitNAV')) document.getElementById('totalNAV').value = localStorage.getItem('jitNAV');
         renderWatchlist();
         renderPortfolio();
-        updatePrices(); // Gọi giá ngay khi mở
+        
+        // Auto update on load if link is present
+        if(API_URL.includes("script.google.com")) {
+            setTimeout(updatePrices, 1000);
+        } else {
+            document.getElementById('error-log').innerText = "⚠️ Chưa dán link Apps Script vào Code!";
+            document.getElementById('error-log').classList.remove('hidden');
+        }
 
         // --- CORE FUNCTIONS ---
         async function updatePrices() {
-            if(API_URL.includes("DÁN_LINK")) {
-                console.log("Chưa dán Link API!"); 
+            if(!API_URL.includes("script.google.com")) return alert("Việt ơi, chưa dán Link API vào code kìa!");
+
+            const btnIcon = document.getElementById('btn-icon');
+            const statusLight = document.getElementById('status-light');
+            btnIcon.innerHTML = `<span class="loader"></span>`;
+            statusLight.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
+
+            // Lấy danh sách mã duy nhất
+            const symbols = [...new Set([...watchlist.map(i=>i.sym), ...portfolio.map(i=>i.sym)])].join(',');
+            
+            if(!symbols) {
+                btnIcon.innerText = "🔄";
+                statusLight.className = "w-2 h-2 rounded-full bg-green-500";
                 return;
             }
 
-            // Lấy tất cả mã từ Watchlist và Portfolio
-            const symbols = [...new Set([...watchlist.map(i=>i.sym), ...portfolio.map(i=>i.sym)])].join(',');
-            if(!symbols) return;
-
-            document.body.style.cursor = 'wait';
             try {
-                // Gọi tới Apps Script
                 const res = await fetch(`${API_URL}?symbols=${symbols}`);
                 const data = await res.json();
                 
-                // data trả về từ TCBS dạng mảng
+                if(data.error) {
+                    throw new Error(data.error);
+                }
+
                 if(data && data.data) {
                     data.data.forEach(stock => {
+                        // Logic xác định màu
+                        let color = 'text-ref';
+                        if(stock.price > stock.refPrice) color = 'text-up';
+                        if(stock.price < stock.refPrice) color = 'text-down';
+
                         marketData[stock.ticker] = {
-                            price: stock.price, // Giá khớp
-                            change: stock.changePercent, // % Tăng giảm
-                            color: stock.price > stock.refPrice ? 'price-up' : (stock.price < stock.refPrice ? 'price-down' : 'price-ref')
+                            price: stock.price, // TCBS trả về giá (vd 28.15)
+                            change: stock.changePercent,
+                            color: color,
+                            ref: stock.refPrice
                         };
                     });
                     renderWatchlist();
                     renderPortfolio();
+                    statusLight.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]";
                 }
-            } catch(e) { console.error(e); }
-            document.body.style.cursor = 'default';
+            } catch(e) { 
+                console.error(e);
+                statusLight.className = "w-2 h-2 rounded-full bg-red-500";
+                alert("Lỗi cập nhật giá: " + e.message + "\nKiểm tra lại xem đã Deploy Apps Script chế độ 'Anyone' chưa?");
+            } finally {
+                btnIcon.innerText = "🔄";
+            }
         }
 
         function calculateJIT(nav, item) {
@@ -143,8 +179,13 @@
             let k = (item.p * (b + 1) - 1) / b;
             k = k > 0 ? k : 0;
             
+            // Logic 1% Risk
             const riskAmt = nav * 0.01;
-            const qRisk = Math.floor((riskAmt / (risk * 1000)) / 100) * 100;
+            // qRisk = (Tiền rủi ro) / (Lỗ trên 1 cổ phiếu * 1000) -> Ra lô chẵn
+            let qRisk = 0;
+            if(risk > 0) qRisk = Math.floor((riskAmt / (risk * 1000)) / 100) * 100;
+            
+            // Logic Cash (Tiền mặt)
             const qCash = Math.floor((nav / (item.ent * 1000))/100) * 100;
             
             return { qSafe: Math.min(qRisk, qCash) };
@@ -155,35 +196,42 @@
             const nav = parseFloat(document.getElementById('totalNAV').value);
             const container = document.getElementById('watchlist-container');
             
+            if(watchlist.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Danh sách trống.<br>Nhập mã bên tab Hunter!</div>`;
+                return;
+            }
+
             container.innerHTML = watchlist.map(i => {
                 const res = calculateJIT(nav, i);
                 const mkt = marketData[i.sym] || { price: 0, change: 0, color: 'text-white' };
-                // Logic cảnh báo: Nếu giá thị trường <= Entry (đã về vùng mua) -> Highlight
+                
+                // Highlight nếu giá về vùng mua (Giá TT <= Entry VÀ Giá TT > 0)
                 const isBuyZone = mkt.price > 0 && mkt.price <= i.ent;
-                const bgClass = isBuyZone ? 'bg-emerald-900/30 border-emerald-500' : 'bg-[#1e293b] border-slate-700';
-
+                
                 return `
-                <div class="glass-card p-3 rounded border-l-4 ${isBuyZone ? 'border-emerald-500' : 'border-yellow-500'} ${bgClass} relative">
+                <div class="glass-card p-3 rounded border-l-4 ${isBuyZone ? 'border-emerald-500 bg-emerald-900/20' : 'border-yellow-500 bg-[#1e293b]'} relative transition-all">
                     <div class="flex justify-between items-start">
                         <div>
                             <span class="font-black text-white text-lg">${i.sym}</span>
-                            <span class="text-[10px] text-slate-500 block">Entry: ${i.ent}</span>
+                            <span class="text-[10px] text-slate-400 block">Entry: <b>${i.ent}</b> | SL: <b class="text-red-400">${i.sl}</b></span>
                         </div>
                         <div class="text-right">
-                            <div class="text-lg font-bold ${mkt.color}">${mkt.price > 0 ? mkt.price : '---'}</div>
-                            <div class="text-[9px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change}%</div>
+                            <div class="text-lg font-bold ${mkt.color}">${mkt.price > 0 ? mkt.price.toFixed(2) : '---'}</div>
+                            <div class="text-[9px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change > -999 ? mkt.change + '%' : '--'}</div>
                         </div>
                     </div>
-                    <div class="mt-2 flex justify-between items-end">
+                    
+                    ${isBuyZone ? `<div class="my-2 text-center text-[10px] font-bold text-emerald-400 animate-pulse bg-emerald-900/50 rounded py-1">⚡ GIÁ ĐÃ VỀ VÙNG MUA! ⚡</div>` : ''}
+
+                    <div class="mt-2 flex justify-between items-end border-t border-slate-700/50 pt-2">
                         <div>
-                            <span class="block text-[9px] text-slate-400">KL Khuyến nghị</span>
-                            <span class="font-bold text-yellow-400 text-sm">${res.qSafe.toLocaleString()}</span>
+                            <span class="block text-[9px] text-slate-400">KL Mua (1% Risk)</span>
+                            <span class="font-bold text-yellow-400 text-sm">${res.qSafe.toLocaleString()} cp</span>
                         </div>
-                        ${isBuyZone ? `<span class="animate-pulse text-[10px] bg-emerald-600 text-white px-2 py-1 rounded font-bold">MÚC NGAY!</span>` : ''}
-                    </div>
-                    <div class="mt-2 pt-2 border-t border-slate-700/50 flex gap-2">
-                         <button onclick="moveToPortfolio(${i.id})" class="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-[10px] py-1.5 rounded">ĐÃ KHỚP</button>
-                         <button onclick="deleteItem('w', ${i.id})" class="px-3 bg-slate-800 text-slate-400 rounded text-[10px]">✕</button>
+                        <div class="flex gap-2">
+                             <button onclick="moveToPortfolio(${i.id})" class="bg-sky-700 hover:bg-sky-600 text-white text-[10px] py-1.5 px-3 rounded font-bold shadow-lg">KHỚP</button>
+                             <button onclick="deleteItem('w', ${i.id})" class="bg-slate-800 hover:bg-red-900 text-slate-400 py-1.5 px-2.5 rounded">✕</button>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
@@ -194,37 +242,46 @@
             const container = document.getElementById('portfolio-container');
             let totalProfit = 0;
 
+            if(portfolio.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Chưa nắm giữ mã nào.</div>`;
+                document.getElementById('total-pnl').innerText = "0.00 Tr";
+                return;
+            }
+
             container.innerHTML = portfolio.map(i => {
                 const res = calculateJIT(nav, i);
-                const mkt = marketData[i.sym] || { price: i.ent, change: 0, color: 'text-white' }; // Nếu chưa có giá thì lấy giá vốn
+                const mkt = marketData[i.sym] || { price: i.ent, change: 0, color: 'text-slate-300' };
                 
-                // Tính lãi lỗ tạm tính (Giả sử đã mua theo khối lượng qSafe)
-                // Lãi = (Giá hiện tại - Giá vốn) * Khối lượng
+                // PnL = (Giá TT - Giá Vốn) * 1000 * Số lượng
                 const currentProfit = (mkt.price - i.ent) * 1000 * res.qSafe;
                 totalProfit += currentProfit;
+                
+                const pnlText = (currentProfit/1000000).toFixed(2) + " Tr";
+                const pnlClass = currentProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
 
                 return `
                 <div class="glass-card p-3 rounded bg-[#131c31] border-l-2 ${currentProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}">
-                    <div class="flex justify-between items-center mb-1">
+                    <div class="flex justify-between items-center mb-2">
                         <span class="font-black text-white text-lg">${i.sym}</span>
                         <div class="text-right">
-                            <span class="text-sm font-bold ${currentProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                ${currentProfit > 0 ? '+' : ''}${(currentProfit/1000000).toFixed(2)} Tr
+                            <span class="text-sm font-bold ${pnlClass}">
+                                ${currentProfit > 0 ? '+' : ''}${pnlText}
                             </span>
                         </div>
                     </div>
-                    <div class="flex justify-between text-[10px] text-slate-400 bg-black/20 p-2 rounded">
-                        <span>Giá vốn: <b>${i.ent}</b></span>
-                        <span>Thị trường: <b class="${mkt.color}">${mkt.price}</b></span>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 bg-black/20 p-2 rounded mb-2">
+                        <div>Vốn: <b class="text-white">${i.ent}</b></div>
+                        <div class="text-right">Thị trường: <b class="${mkt.color}">${mkt.price}</b></div>
                     </div>
-                    <div class="text-right mt-2">
-                         <button onclick="deleteItem('p', ${i.id})" class="text-[10px] text-slate-500 hover:text-red-400">Tất toán</button>
+                    <div class="flex justify-between items-center mt-2">
+                         <span class="text-[9px] text-slate-500">KL: ${res.qSafe.toLocaleString()}</span>
+                         <button onclick="deleteItem('p', ${i.id})" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-slate-300">Tất toán</button>
                     </div>
                 </div>`;
             }).join('');
 
             const pnlEl = document.getElementById('total-pnl');
-            pnlEl.innerText = `${totalProfit > 0 ? '+' : ''}${(totalProfit/1000000).toFixed(2)} Triệu`;
+            pnlEl.innerText = `${totalProfit > 0 ? '+' : ''}${(totalProfit/1000000).toFixed(2)} Tr`;
             pnlEl.className = `text-sm font-bold ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
         }
 
@@ -241,7 +298,8 @@
             const ent = parseFloat(document.getElementById('entry').value);
             const tg = parseFloat(document.getElementById('target').value);
             const sl = parseFloat(document.getElementById('stoploss').value);
-            if(!sym || !ent) return;
+            if(!sym || isNaN(ent) || isNaN(sl)) return alert("Nhập thiếu thông số rồi Việt ơi!");
+            
             watchlist.unshift({ id: Date.now(), sym, p, ent, tg, sl });
             saveConfig(); switchTab('watchlist'); updatePrices();
         }
