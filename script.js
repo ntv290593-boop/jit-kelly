@@ -242,11 +242,20 @@ function executeSell() {
 
 function logHistory(type, sym, price, vol) {
     history.unshift({
+        id: Date.now() + Math.random(), // Tạo ID duy nhất để xóa
         type, sym, price, vol,
         date: new Date().toLocaleString('vi-VN')
     });
-    if(history.length > 50) history.pop();
-    renderHistory();
+    if(history.length > 50) history.pop(); // Giữ 50 lệnh gần nhất
+    saveState(); // Lưu ngay lập tức
+}
+
+// --- 2. Thêm hàm Xóa từng dòng ---
+function deleteHistoryItem(id) {
+    if(confirm('Xóa dòng lịch sử này? (Tiền và CP sẽ không bị ảnh hưởng, chỉ xóa log)')) {
+        history = history.filter(h => h.id !== id);
+        saveState();
+    }
 }
 
 // --- UI HELPERS ---
@@ -365,8 +374,4 @@ function renderPortfolio() {
         </div>`;
     }).join('');
 }
-function renderHistory() {
-    const container = document.getElementById('history-container');
-    if(history.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-[10px] mt-10">Chưa có giao dịch.</div>`; return; }
-    container.innerHTML = history.map(h => `<div class="flex justify-between items-center p-3 mb-2 rounded border border-slate-800 bg-slate-900/50 text-[11px]"><div><span class="font-bold ${h.type==='buy'?'text-sky-400':'text-rose-400'}">${h.type==='buy'?'MUA':'BÁN'} ${h.sym}</span><div class="text-slate-500 text-[9px]">${h.date}</div></div><div class="text-right"><div><span class="text-slate-400">Giá:</span> <span class="text-white font-bold">${h.price}</span></div><div><span class="text-slate-400">KL:</span> <span class="text-white font-bold">${formatNumber(h.vol)}</span></div></div></div>`).join('');
-}
+renderHistory
