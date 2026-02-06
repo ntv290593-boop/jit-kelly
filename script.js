@@ -102,18 +102,51 @@ function saveSetup() {
 }
 
 function openImportModal() { document.getElementById('importModal').classList.add('open'); }
+// --- CẬP NHẬT HÀM NÀY ĐỂ FIX LỖI TRÙNG MÃ ---
 function executeImport() {
     const sym = document.getElementById('impSym').value.toUpperCase();
     const price = parseFloat(document.getElementById('impPrice').value);
     const vol = parseNumber(document.getElementById('impVol').value);
+    
     if(!sym || !price || !vol) return alert("Nhập thiếu thông tin!");
     
-    const newItem = { id: Date.now(), sym, buyPrice: price, vol: vol, buyDate: new Date(), ent: price, tg: price*1.1, sl: price*0.95 };
-    portfolio.unshift(newItem);
+    // 1. Kiểm tra xem mã này đã có trong Portfolio chưa
+    const existingIdx = portfolio.findIndex(p => p.sym === sym);
+    
+    if(existingIdx !== -1) {
+        // CASE A: Đã có -> Gộp vào (Trung bình giá)
+        const oldItem = portfolio[existingIdx];
+        const newVol = oldItem.vol + vol;
+        // Công thức giá vốn TB: (Giá cũ * KL cũ + Giá mới * KL mới) / Tổng KL
+        const newAvgPrice = ((oldItem.buyPrice * oldItem.vol) + (price * vol)) / newVol;
+        
+        portfolio[existingIdx].vol = newVol;
+        portfolio[existingIdx].buyPrice = parseFloat(newAvgPrice.toFixed(2));
+        
+        // Cập nhật các chỉ số JIT (Entry, Target, Stoploss) theo giá mới nếu cần
+        // Ở đây ta giữ nguyên setup cũ hoặc reset theo ý ông. 
+        // Tạm thời giữ nguyên setup cũ cho an toàn.
+        
+        alert(`Đã gộp thêm ${formatNumber(vol)} ${sym} vào danh mục!\nGiá vốn mới: ${formatNumber(newAvgPrice)}`);
+    } else {
+        // CASE B: Chưa có -> Thêm mới
+        const newItem = { 
+            id: Date.now(), 
+            sym, 
+            buyPrice: price, 
+            vol: vol, 
+            buyDate: new Date(), 
+            // Tự động tạo Setup JIT giả định (có thể sửa sau)
+            ent: price, 
+            tg: price * 1.1, // Target +10%
+            sl: price * 0.95 // SL -5%
+        };
+        portfolio.unshift(newItem);
+    }
+
     saveState();
     closeModal('importModal');
 }
-
 // --- TRANSACTION LOGIC ---
 function openTxModal(type, id) {
     const modal = document.getElementById('txModal');
