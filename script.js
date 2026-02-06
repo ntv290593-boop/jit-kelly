@@ -233,9 +233,19 @@ function addToWatchlist() {
     saveState(); switchTab('watchlist'); simulatePrices();
 }
 function deleteItem(type, id) {
-    if(confirm('Xóa mã này?')) {
-        if(type === 'w') watchlist = watchlist.filter(i => i.id !== id);
-        saveState();
+    // Cảnh báo kỹ trước khi xóa
+    const msg = type === 'w' 
+        ? 'Xóa mã này khỏi danh sách theo dõi?' 
+        : 'CẢNH BÁO: Xóa mã khỏi danh mục sẽ KHÔNG hoàn lại tiền (Dùng để sửa sai). Bạn có chắc chắn?';
+
+    if(confirm(msg)) {
+        if(type === 'w') {
+            watchlist = watchlist.filter(i => i.id !== id);
+        } else if (type === 'p') {
+            // Xóa khỏi Portfolio
+            portfolio = portfolio.filter(i => i.id !== id);
+        }
+        saveState(); // Lưu và Render lại ngay
     }
 }
 function clearHistory() { if(confirm('Xóa lịch sử?')) { history = []; saveState(); } }
@@ -261,41 +271,63 @@ function simulatePrices() {
     updateDashboard(); renderWatchlist(); renderPortfolio(); renderHistory();
 }
 
+// --- CẬP NHẬT HÀM RENDER WATCHLIST ---
 function renderWatchlist() { 
     const container = document.getElementById('watchlist-container');
     if(watchlist.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-[10px] mt-10">Trống.</div>`; return; }
+    
     container.innerHTML = watchlist.map(i => {
         const res = calculateJIT(i);
         const mkt = mockMarketData[i.sym] || { price: i.ent, change: 0, color: 'text-white' };
         const isBuyZone = mkt.price > 0 && mkt.price <= i.ent;
-        return `<div class="glass-card p-4 rounded-xl border-l-4 ${isBuyZone ? 'border-emerald-500 bg-emerald-900/10' : 'border-slate-600 bg-[#1e293b]'} shadow relative mb-3">
-            <div class="flex justify-between items-start mb-2">
+        
+        return `<div class="glass-card p-4 rounded-xl border-l-4 ${isBuyZone ? 'border-emerald-500 bg-emerald-900/10' : 'border-slate-600 bg-[#1e293b]'} shadow relative mb-3 group">
+            <button onclick="deleteItem('w', ${i.id})" class="absolute top-2 right-2 text-slate-600 hover:text-red-500 p-1 rounded transition">✕</button>
+
+            <div class="flex justify-between items-start mb-2 pr-4">
                 <div><span class="font-black text-white text-lg tracking-wide">${i.sym}</span><span class="text-[10px] text-slate-400 block mt-0.5">Entry: <b>${i.ent}</b> | SL: <b class="text-red-400">${i.sl}</b></span></div>
                 <div class="text-right"><div class="text-lg font-bold ${mkt.color}">${mkt.price}</div><div class="text-[10px] ${mkt.change>=0?'text-emerald-400':'text-red-400'}">${mkt.change}%</div></div>
             </div>
+            
             ${isBuyZone ? `<div class="mb-2 text-center text-[10px] font-bold text-emerald-400 animate-pulse bg-emerald-900/50 rounded py-1">⚡ GIÁ VỀ VÙNG MUA!</div>` : ''}
+            
             <div class="bg-black/20 rounded p-2 grid grid-cols-2 gap-2 mb-3 border border-slate-700/50">
-                <div><span class="block text-[9px] text-slate-500 uppercase">KL Khuyến nghị (1% NAV)</span><span class="font-bold text-yellow-400 text-sm">${formatNumber(res.qSafe)}</span></div>
+                <div><span class="block text-[9px] text-slate-500 uppercase">KL Khuyến nghị</span><span class="font-bold text-yellow-400 text-sm">${formatNumber(res.qSafe)}</span></div>
                 <div class="text-right"><span class="block text-[9px] text-slate-500 uppercase">Giá trị</span><span class="font-bold text-sky-400 text-sm">${formatNumber(res.totalValue)}</span></div>
             </div>
-            <div class="flex gap-2"><button onclick="openTxModal('buy', ${i.id})" class="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-[10px] font-bold py-2 rounded shadow">⚡ KHỚP MUA</button><button onclick="deleteItem('w', ${i.id})" class="px-3 bg-slate-800 text-slate-400 rounded hover:bg-red-900 text-[10px]">✕</button></div>
+            
+            <button onclick="openTxModal('buy', ${i.id})" class="w-full bg-sky-700 hover:bg-sky-600 text-white text-[10px] font-bold py-2 rounded shadow">⚡ KHỚP MUA</button>
         </div>`;
     }).join('');
 }
+// --- CẬP NHẬT HÀM RENDER PORTFOLIO ---
 function renderPortfolio() {
     const container = document.getElementById('portfolio-container');
     if(portfolio.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-[10px] mt-10">Trống.</div>`; return; }
+    
     container.innerHTML = portfolio.map(i => {
         const mkt = mockMarketData[i.sym] || { price: i.buyPrice, color: 'text-white' };
         const pnl = (mkt.price - i.buyPrice) * i.vol * 1000;
         const pnlPer = ((mkt.price - i.buyPrice)/i.buyPrice)*100;
-        return `<div class="glass-card p-4 rounded-xl bg-[#131c31] border-l-4 ${pnl >= 0 ? 'border-emerald-500' : 'border-rose-500'} shadow mb-3">
-            <div class="flex justify-between items-center mb-2"><span class="font-black text-white text-xl">${i.sym}</span><div class="text-right"><span class="text-sm font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnl>0?'+':''}${formatNumber(pnl)}</span><span class="block text-[9px] text-slate-500">${pnlPer.toFixed(2)}%</span></div></div>
+        
+        return `<div class="glass-card p-4 rounded-xl bg-[#131c31] border-l-4 ${pnl >= 0 ? 'border-emerald-500' : 'border-rose-500'} shadow mb-3 relative group">
+            
+            <button onclick="deleteItem('p', ${i.id})" class="absolute top-2 right-2 text-slate-700 hover:text-red-500 p-1 transition" title="Xóa mã (Sửa sai)">✕</button>
+
+            <div class="flex justify-between items-center mb-2 pr-6">
+                <span class="font-black text-white text-xl">${i.sym}</span>
+                <div class="text-right">
+                    <span class="text-sm font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnl>0?'+':''}${formatNumber(pnl)}</span>
+                    <span class="block text-[9px] text-slate-500">${pnlPer.toFixed(2)}%</span>
+                </div>
+            </div>
+            
             <div class="grid grid-cols-3 gap-2 text-[10px] text-slate-400 bg-black/20 p-2 rounded mb-2 border border-slate-700/50">
                 <div class="text-center">Giá Vốn<br><b class="text-white">${i.buyPrice}</b></div>
                 <div class="text-center border-l border-slate-700">KL<br><b class="text-white">${formatNumber(i.vol)}</b></div>
                 <div class="text-center border-l border-slate-700">Thị trường<br><b class="${mkt.color}">${mkt.price}</b></div>
             </div>
+            
             <button onclick="openTxModal('sell', ${i.id})" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold py-2 rounded uppercase">CHỐT / CẮT</button>
         </div>`;
     }).join('');
