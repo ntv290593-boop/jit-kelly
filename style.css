@@ -1,16 +1,57 @@
 body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
 
 /* 3D TABS */
-.tab-container { display: flex; gap: 8px; padding: 10px 15px; background: #020617; border-bottom: 1px solid #1e293b; }
-.tab-btn { 
-    flex: 1; padding: 10px; text-align: center; font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
-    color: #64748b; background: #1e293b; border: 1px solid #334155; border-bottom: 4px solid #0f172a; border-radius: 6px; 
-    cursor: pointer; transition: all 0.1s;
+/* --- 3D TABS STYLE (NEW UPGRADE) --- */
+.tab-container { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr 1fr; /* Chia đều 4 cột */
+    gap: 12px; 
+    padding: 15px; 
+    background: #0b1121; 
+    border-bottom: 1px solid #1e293b;
 }
-.tab-btn:hover { background: #334155; margin-top: -1px; border-bottom-width: 5px; }
+
+.tab-btn { 
+    padding: 12px 5px; 
+    text-align: center; 
+    font-weight: 800; 
+    font-size: 11px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    color: #94a3b8; 
+    background: #1e293b; 
+    
+    /* Hiệu ứng 3D Nổi khối */
+    border: 1px solid #334155; 
+    border-bottom: 4px solid #0f172a; 
+    border-radius: 8px; 
+    
+    cursor: pointer; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hiệu ứng Hover: Sáng lên chút */
+.tab-btn:hover { 
+    background: #334155; 
+    color: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+/* Trạng thái ACTIVE (Đang chọn): Sáng rực, Lún xuống */
 .tab-btn.active { 
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border-color: #38bdf8; 
-    border-bottom: 0px solid transparent; margin-top: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); 
+    color: #ffffff; 
+    border-color: #38bdf8; 
+    
+    /* Mất chân đế 3D -> Cảm giác lún xuống */
+    border-bottom: 0px solid transparent; 
+    margin-top: 4px; 
+    margin-bottom: 0px;
+    
+    /* Hiệu ứng phát sáng (Glow) */
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4), inset 0 2px 4px rgba(255,255,255,0.2);
 }
 
 /* MODAL */
