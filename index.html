@@ -3,179 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIT Terminal V6 (Fix NAV) | Việt BOHO</title>
+    <title>JIT Terminal V7 (Real Trader) | Việt BOHO</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
-        .glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.05); }
-        input { background: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 6px 12px; color: white; width: 100%; font-size: 13px; outline: none; transition: border-color 0.2s; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        
+        /* 3D TABS STYLE */
+        .tab-container { display: flex; gap: 10px; padding: 10px 15px; background: #020617; border-bottom: 1px solid #1e293b; }
+        .tab-btn { 
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            font-weight: 800; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            color: #64748b; 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            border-bottom: 4px solid #0f172a; /* Tạo độ dày 3D */
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.1s;
+        }
+        .tab-btn:hover { background: #334155; color: #cbd5e1; margin-top: -1px; border-bottom-width: 5px; }
+        .tab-btn.active { 
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); 
+            color: white; 
+            border-color: #38bdf8; 
+            border-bottom: 0px solid transparent; /* Mất chân đế khi bấm */
+            margin-top: 4px; /* Lún xuống */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* MODAL (POPUP) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 50; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 350px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); transform: scale(0.95); transition: transform 0.2s; }
+        .modal-overlay.open { display: flex; }
+        .modal-overlay.open .modal-box { transform: scale(1); }
+
+        /* INPUTS */
+        input { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; color: white; width: 100%; font-size: 13px; outline: none; transition: border-color 0.2s; font-family: monospace; }
         input:focus { border-color: #0ea5e9; }
-        .label-xs { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .tab-btn { @apply flex-1 py-3 text-xs font-bold uppercase text-slate-500 border-b-2 border-transparent transition-all cursor-pointer; }
-        .tab-btn.active { @apply text-sky-400 border-sky-400 bg-slate-900/50; }
+        
+        /* OTHERS */
+        .glass-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255,255,255,0.05); }
+        .text-up { color: #34d399; } .text-down { color: #f87171; } .text-ref { color: #fbbf24; }
         .tab-content { display: none; height: 100%; }
         .tab-content.active { display: flex; flex-direction: column; }
-        .text-up { color: #34d399; } .text-down { color: #f87171; } .text-ref { color: #fbbf24; }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
 
-    <nav class="h-12 border-b border-slate-800 flex justify-between items-center px-4 bg-[#0b1121]">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">📊</span>
-            <h1 class="font-black text-sky-400 text-sm tracking-widest">JIT TERMINAL <span class="text-white opacity-50 font-light bg-slate-700 px-1 rounded">V6 NAV FIX</span></h1>
-        </div>
+    <nav class="h-14 border-b border-slate-800 flex justify-between items-center px-4 bg-[#0b1121] shrink-0">
         <div class="flex items-center gap-3">
-            <button onclick="updatePrices()" class="bg-purple-700 hover:bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded flex items-center gap-2 transition animate-pulse">
-                🎲 SIMULATE PRICE
-            </button>
-            <div class="flex items-center gap-2 border-l border-slate-700 pl-3">
-                <span class="text-[10px] text-slate-500 font-bold">NAV (VND):</span>
-                <input type="text" id="totalNAV" value="1,000,000,000" class="bg-transparent border-none p-0 text-right font-bold text-yellow-500 w-32 text-sm focus:ring-0" oninput="formatNAV(this)" onchange="saveConfig()">
+            <span class="text-2xl">💎</span>
+            <div>
+                <h1 class="font-black text-sky-400 text-xs tracking-widest">JIT TERMINAL <span class="text-white opacity-50 font-light bg-slate-700 px-1 rounded">V7 REAL</span></h1>
+                <p class="text-[10px] text-slate-500">Auto Cash Flow</p>
             </div>
+        </div>
+        <div class="text-right">
+            <p class="text-[10px] text-slate-400 font-bold uppercase">Tiền mặt khả dụng (Sức mua)</p>
+            <input type="text" id="cashBalance" value="1,000,000,000" class="bg-transparent border-none p-0 text-right font-black text-xl text-yellow-500 w-48 focus:ring-0" oninput="formatCurrencyInput(this)" onchange="updateCashManual()">
         </div>
     </nav>
 
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        <div class="flex-[2] bg-black border-r border-slate-800 relative h-full hidden md:block" id="chart-container">
+        <div class="flex-[2] bg-black border-r border-slate-800 relative h-full hidden md:block">
             <div class="tradingview-widget-container" style="height:100%;width:100%">
-              <div id="tradingview_b7f5c" style="height:100%;width:100%"></div>
+              <div id="tradingview_widget" style="height:100%;width:100%"></div>
               <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
               <script type="text/javascript">
-              new TradingView.widget({
-              "autosize": true, "symbol": "HOSE:HPG", "interval": "D", "timezone": "Asia/Ho_Chi_Minh", "theme": "dark", "style": "1", "locale": "vi_VN", "enable_publishing": false, "allow_symbol_change": true, "container_id": "tradingview_b7f5c"
-              });
+              new TradingView.widget({ "autosize": true, "symbol": "HOSE:HPG", "interval": "D", "timezone": "Asia/Ho_Chi_Minh", "theme": "dark", "style": "1", "locale": "vi_VN", "enable_publishing": false, "allow_symbol_change": true, "container_id": "tradingview_widget" });
               </script>
             </div>
         </div>
 
-        <div class="w-full md:w-[420px] flex flex-col bg-[#0f172a] h-full shadow-xl z-10 border-l border-slate-800">
-            <div class="flex border-b border-slate-800 bg-[#020617]">
-                <button onclick="switchTab('hunter')" id="tab-hunter" class="tab-btn active">🔭 Hunter</button>
-                <button onclick="switchTab('watchlist')" id="tab-watchlist" class="tab-btn">📋 Watchlist</button>
-                <button onclick="switchTab('portfolio')" id="tab-portfolio" class="tab-btn">💼 Portfolio</button>
+        <div class="w-full md:w-[450px] flex flex-col bg-[#0f172a] h-full shadow-2xl z-10 border-l border-slate-800">
+            
+            <div class="tab-container">
+                <button onclick="switchTab('hunter')" id="tab-hunter" class="tab-btn active">🔭 Săn Mồi</button>
+                <button onclick="switchTab('watchlist')" id="tab-watchlist" class="tab-btn">📋 Theo Dõi</button>
+                <button onclick="switchTab('portfolio')" id="tab-portfolio" class="tab-btn">💼 Tài Sản</button>
             </div>
 
             <div id="view-hunter" class="tab-content active p-5 space-y-4 overflow-y-auto">
-                <div class="bg-slate-800/40 p-4 rounded border border-slate-700">
-                    <h3 class="text-sky-400 font-bold text-sm mb-3 uppercase tracking-wider">Nhập Setup JIT</h3>
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="label-xs">Mã CK</label><input type="text" id="symbol" placeholder="VD: HPG" class="uppercase font-bold tracking-wider"></div>
-                            <div><label class="label-xs">Win Rate %</label><input type="number" id="winRate" value="60"></div>
+                <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700 shadow-inner">
+                    <h3 class="text-sky-400 font-bold text-xs mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 bg-sky-500 rounded-full"></span> Tính toán vị thế
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] text-slate-400 uppercase font-bold">Mã CK</label><input type="text" id="symbol" placeholder="VD: HPG" class="uppercase font-bold text-lg tracking-widest text-white"></div>
+                            <div><label class="text-[10px] text-slate-400 uppercase font-bold">Win Rate %</label><input type="number" id="winRate" value="60" class="text-lg"></div>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
-                            <div><label class="label-xs text-slate-400">Entry</label><input type="number" id="entry" step="0.05" placeholder="28.0"></div>
-                            <div><label class="label-xs text-emerald-400">Target</label><input type="number" id="target" step="0.05" placeholder="32.0"></div>
-                            <div><label class="label-xs text-rose-400">Stoploss</label><input type="number" id="stoploss" step="0.05" placeholder="26.5"></div>
+                            <div><label class="text-[10px] text-slate-400">Entry</label><input type="number" id="entry" step="0.05" class="text-white"></div>
+                            <div><label class="text-[10px] text-emerald-500">Target</label><input type="number" id="target" step="0.05" class="text-emerald-400 font-bold"></div>
+                            <div><label class="text-[10px] text-rose-500">Stoploss</label><input type="number" id="stoploss" step="0.05" class="text-rose-400 font-bold"></div>
                         </div>
                     </div>
-                    
-                    <button onclick="addToWatchlist()" class="w-full mt-4 bg-gradient-to-r from-sky-700 to-blue-700 hover:from-sky-600 text-white font-bold py-3 rounded shadow-lg text-xs uppercase transform active:scale-95 transition">
-                        + Thêm vào Watchlist
+                    <button onclick="addToWatchlist()" class="w-full mt-6 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg text-sm uppercase transform active:translate-y-1 transition-all">
+                        + Thêm vào List Theo Dõi
                     </button>
-                </div>
-                <div class="text-[10px] text-slate-500 italic text-center px-4">
-                    *Lưu ý: Nhập giá đơn vị nghìn đồng (VD: 28.5 tức là 28,500đ)
                 </div>
             </div>
 
             <div id="view-watchlist" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
-                <div id="watchlist-container" class="space-y-3 pb-10"></div>
+                <div id="watchlist-container" class="space-y-3 pb-20"></div>
             </div>
 
             <div id="view-portfolio" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
-                 <div class="flex justify-between px-1 border-b border-slate-800 pb-2 mb-2">
-                     <span class="label-xs text-slate-400">Tổng PnL (Giả lập)</span>
-                     <span id="total-pnl" class="text-sm font-bold text-white">---</span>
+                 <div class="flex justify-between px-2 border-b border-slate-800 pb-2 mb-2">
+                     <span class="text-[10px] text-slate-400 uppercase font-bold">Tổng Giá Trị TS (Mock)</span>
+                     <span id="total-asset-val" class="text-sm font-bold text-white">0</span>
                  </div>
-                <div id="portfolio-container" class="space-y-3 pb-10"></div>
+                <div id="portfolio-container" class="space-y-3 pb-20"></div>
             </div>
         </div>
     </main>
 
+    <div id="txModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="modalTitle" class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Xác nhận giao dịch</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-slate-400 uppercase">Giá Khớp Thực Tế (000đ)</label>
+                    <input type="number" id="txPrice" step="0.05" class="text-lg font-bold text-yellow-400 bg-slate-900">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 uppercase">Khối Lượng Thực Tế</label>
+                    <input type="text" id="txVol" class="text-lg font-bold text-white bg-slate-900" oninput="formatCurrencyInput(this)">
+                </div>
+                <div class="text-right text-[10px] text-slate-500" id="txTotalCalc">Tổng tiền: 0</div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button onclick="closeModal()" class="py-2 rounded bg-slate-700 text-slate-300 font-bold hover:bg-slate-600">Hủy</button>
+                <button id="txConfirmBtn" class="py-2 rounded bg-emerald-600 text-white font-bold hover:bg-emerald-500 shadow-lg">XÁC NHẬN</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let mockMarketData = {}; 
+        // DATA
         let watchlist = JSON.parse(localStorage.getItem('jitWatchlist')) || [];
         let portfolio = JSON.parse(localStorage.getItem('jitPortfolio')) || [];
+        let mockMarketData = {}; 
+        let currentTx = null; // Lưu trạng thái giao dịch đang mở
 
-        // --- 1. XỬ LÝ NAV CÓ DẤU PHẨY ---
-        // Khi load trang
-        if(localStorage.getItem('jitNAV')) {
-            document.getElementById('totalNAV').value = localStorage.getItem('jitNAV');
+        // INIT
+        if(localStorage.getItem('jitCash')) {
+            document.getElementById('cashBalance').value = formatNumber(parseFloat(localStorage.getItem('jitCash')));
         }
         
-        // Hàm format khi nhập liệu (1000000 -> 1,000,000)
-        function formatNAV(input) {
-            // Xóa hết ký tự không phải số
-            let value = input.value.replace(/\D/g, "");
-            // Format lại có dấu phẩy
-            input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        simulatePrices(); // Fake giá để chạy Demo
+
+        // --- CORE FUNCTIONS ---
+
+        // 1. FORMAT TIỀN FULL (Không viết tắt)
+        function formatNumber(num) {
+            return num.toLocaleString('en-US'); // 1,000,000
+        }
+        function parseNumber(str) {
+            return parseFloat(str.replace(/,/g, '')) || 0;
+        }
+        function formatCurrencyInput(input) {
+            let val = input.value.replace(/\D/g, "");
+            input.value = val.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            // Cập nhật tính toán trong Modal nếu đang mở
+            if(document.getElementById('txModal').style.display === 'flex') updateTxCalc();
         }
 
-        // Hàm lấy giá trị NAV thô (số) để tính toán
-        function getRawNAV() {
-            const val = document.getElementById('totalNAV').value;
-            // Xóa dấu phẩy để ra số nguyên (1,000,000 -> 1000000)
-            return parseFloat(val.replace(/,/g, '')) || 0;
-        }
-
-        simulatePrices();
-
-        // --- CORE LOGIC (ĐÃ FIX) ---
-        function updatePrices() { simulatePrices(); renderWatchlist(); renderPortfolio(); }
-        
-        function simulatePrices() {
-            const allItems = [...watchlist, ...portfolio];
-            allItems.forEach(item => {
-                const randomChange = (Math.random() * 0.1) - 0.05; 
-                const fakePrice = item.ent * (1 + randomChange);
-                mockMarketData[item.sym] = {
-                    price: parseFloat(fakePrice.toFixed(2)),
-                    change: (randomChange * 100).toFixed(2),
-                    color: fakePrice > item.ent ? 'text-up' : (fakePrice < item.ent ? 'text-down' : 'text-ref')
-                };
-            });
-        }
-
+        // 2. LOGIC TÍNH TOÁN JIT
         function calculateJIT(item) {
-            // Lấy NAV chuẩn từ hàm getRawNAV (quan trọng!)
-            const nav = getRawNAV(); 
-
+            const cash = parseNumber(document.getElementById('cashBalance').value);
             const reward = item.tg - item.ent;
             const risk = item.ent - item.sl;
-            
-            // Logic 1% Risk Rule
-            const riskAmt = nav * 0.01; // Số tiền chấp nhận mất (1% NAV)
-            const lossPerShare = risk * 1000; // Lỗ trên 1 cổ phiếu (VND)
+            const riskAmt = cash * 0.01; 
+            const lossPerShare = risk * 1000; 
             
             let qRisk = 0;
-            if(lossPerShare > 0) {
-                // Công thức: (Số tiền rủi ro / Lỗ 1 cổ) -> Làm tròn xuống lô 100
-                qRisk = Math.floor((riskAmt / lossPerShare) / 100) * 100;
-            }
-
-            // Logic Cash Constraint (Không mua quá tiền mặt)
-            const pricePerShare = item.ent * 1000;
-            const qCash = Math.floor((nav / pricePerShare) / 100) * 100;
-
-            // An toàn: Lấy số nhỏ nhất
+            if(lossPerShare > 0) qRisk = Math.floor((riskAmt / lossPerShare) / 100) * 100;
+            const qCash = Math.floor((cash / (item.ent * 1000)) / 100) * 100;
             const qSafe = Math.min(qRisk, qCash);
             
-            // Tính tổng giá trị mua để hiển thị % NAV
-            const totalValue = qSafe * pricePerShare;
-            const percentNAV = nav > 0 ? (totalValue / nav) * 100 : 0;
-
-            return { qSafe, totalValue, percentNAV };
+            return { qSafe, totalValue: qSafe * item.ent * 1000 };
         }
 
-        // --- RENDERERS ---
+        // 3. RENDERERS
         function renderWatchlist() {
             const container = document.getElementById('watchlist-container');
-            if(watchlist.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Danh sách trống.</div>`; return; }
+            if(watchlist.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-10">Danh sách trống.</div>`; return; }
 
             container.innerHTML = watchlist.map(i => {
                 const res = calculateJIT(i);
@@ -183,33 +205,34 @@
                 const isBuyZone = mkt.price > 0 && mkt.price <= i.ent;
                 
                 return `
-                <div class="glass-card p-3 rounded border-l-4 ${isBuyZone ? 'border-emerald-500 bg-emerald-900/20' : 'border-yellow-500 bg-[#1e293b]'} relative">
-                    <div class="flex justify-between items-start">
+                <div class="glass-card p-4 rounded-xl border-l-4 ${isBuyZone ? 'border-emerald-500 bg-emerald-900/10' : 'border-slate-600 bg-[#1e293b]'} shadow-lg relative">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
-                            <span class="font-black text-white text-lg">${i.sym}</span>
-                            <span class="text-[10px] text-slate-400 block">Entry: <b>${i.ent}</b> | SL: <b class="text-red-400">${i.sl}</b></span>
+                            <span class="font-black text-white text-xl tracking-wide">${i.sym}</span>
+                            <span class="text-[10px] text-slate-400 block mt-1">Entry: <b>${i.ent}</b> | SL: <b class="text-red-400">${i.sl}</b></span>
                         </div>
                         <div class="text-right">
-                            <div class="text-lg font-bold ${mkt.color}">${mkt.price}</div>
-                            <div class="text-[9px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change}%</div>
+                            <div class="text-xl font-bold ${mkt.color}">${mkt.price}</div>
+                            <div class="text-[10px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change}%</div>
                         </div>
                     </div>
                     
-                    ${isBuyZone ? `<div class="my-2 text-center text-[10px] font-bold text-emerald-400 animate-pulse bg-emerald-900/50 rounded py-1">⚡ GIÁ VỀ VÙNG MUA! ⚡</div>` : ''}
-
-                    <div class="mt-2 border-t border-slate-700/50 pt-2 grid grid-cols-2 gap-2">
+                    <div class="bg-black/20 rounded p-2 grid grid-cols-2 gap-2 mb-3">
                         <div>
-                            <span class="block text-[9px] text-slate-400">KL Mua (1% Risk)</span>
-                            <span class="font-bold text-yellow-400 text-sm">${res.qSafe.toLocaleString()} cp</span>
+                            <span class="block text-[9px] text-slate-500 uppercase">KL Khuyến nghị</span>
+                            <span class="font-bold text-yellow-400 text-sm">${formatNumber(res.qSafe)}</span>
                         </div>
                         <div class="text-right">
-                            <span class="block text-[9px] text-slate-400">Giá trị / %NAV</span>
-                            <span class="font-bold text-sky-400 text-xs">${(res.totalValue/1000000).toLocaleString()} Tr (${res.percentNAV.toFixed(1)}%)</span>
+                            <span class="block text-[9px] text-slate-500 uppercase">Vốn Dự kiến</span>
+                            <span class="font-bold text-sky-400 text-sm">${formatNumber(res.totalValue)}</span>
                         </div>
                     </div>
-                     <div class="mt-2 flex gap-2">
-                             <button onclick="moveToPortfolio(${i.id})" class="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-[10px] py-1.5 px-3 rounded font-bold shadow-lg">ĐÃ KHỚP</button>
-                             <button onclick="deleteItem('w', ${i.id})" class="bg-slate-800 hover:bg-red-900 text-slate-400 py-1.5 px-2.5 rounded">✕</button>
+
+                    <div class="flex gap-2">
+                        <button onclick="openTxModal('buy', ${i.id})" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white text-[10px] font-bold py-2 rounded shadow transition transform active:scale-95">
+                            ⚡ KHỚP LỆNH (MUA)
+                        </button>
+                        <button onclick="deleteItem('w', ${i.id})" class="px-3 bg-slate-800 text-slate-400 rounded hover:bg-red-900">✕</button>
                     </div>
                 </div>`;
             }).join('');
@@ -217,39 +240,138 @@
 
         function renderPortfolio() {
             const container = document.getElementById('portfolio-container');
-            let totalProfit = 0;
+            let totalAsset = 0;
 
-            if(portfolio.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Két sắt rỗng.</div>`; document.getElementById('total-pnl').innerText = "0.00 Tr"; return; }
+            if(portfolio.length === 0) { container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-10">Chưa nắm giữ mã nào.</div>`; return; }
 
             container.innerHTML = portfolio.map(i => {
-                const res = calculateJIT(i);
-                const mkt = mockMarketData[i.sym] || { price: i.ent, change: 0, color: 'text-slate-300' };
-                const currentProfit = (mkt.price - i.ent) * 1000 * res.qSafe;
-                totalProfit += currentProfit;
-                
+                const mkt = mockMarketData[i.sym] || { price: i.buyPrice, change: 0, color: 'text-white' };
+                // Lãi lỗ = (Giá TT - Giá Mua) * KL * 1000
+                const pnl = (mkt.price - i.buyPrice) * i.vol * 1000;
+                const currentValue = mkt.price * i.vol * 1000;
+                totalAsset += currentValue;
+
                 return `
-                <div class="glass-card p-3 rounded bg-[#131c31] border-l-2 ${currentProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-black text-white text-lg">${i.sym}</span>
+                <div class="glass-card p-4 rounded-xl bg-[#131c31] border-l-4 ${pnl >= 0 ? 'border-emerald-500' : 'border-rose-500'} shadow-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-black text-white text-xl">${i.sym}</span>
                         <div class="text-right">
-                            <span class="text-sm font-bold ${currentProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                ${currentProfit > 0 ? '+' : ''}${(currentProfit/1000000).toFixed(2)} Tr
+                            <span class="text-sm font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${pnl > 0 ? '+' : ''}${formatNumber(pnl)}
                             </span>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] text-slate-400 bg-black/20 p-2 rounded">
-                        <span>Giá: <b class="${mkt.color}">${mkt.price}</b></span>
-                        <span>KL: <b>${res.qSafe.toLocaleString()}</b></span>
-                        <span>%NAV: <b class="text-sky-400">${res.percentNAV.toFixed(1)}%</b></span>
+                    <div class="grid grid-cols-3 gap-2 text-[10px] text-slate-400 bg-black/20 p-2 rounded mb-3">
+                        <div class="text-center"><div class="uppercase text-[9px]">Giá Mua</div><b class="text-white text-xs">${i.buyPrice}</b></div>
+                        <div class="text-center border-l border-slate-700"><div class="uppercase text-[9px]">KL</div><b class="text-white text-xs">${formatNumber(i.vol)}</b></div>
+                        <div class="text-center border-l border-slate-700"><div class="uppercase text-[9px]">Thị trường</div><b class="${mkt.color} text-xs">${mkt.price}</b></div>
                     </div>
-                    <div class="text-right mt-2">
-                         <button onclick="deleteItem('p', ${i.id})" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-slate-300">Tất toán</button>
-                    </div>
+                    <button onclick="openTxModal('sell', ${i.id})" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold py-2 rounded uppercase transition">
+                        💰 TẤT TOÁN (BÁN)
+                    </button>
                 </div>`;
             }).join('');
-            const pnlEl = document.getElementById('total-pnl');
-            pnlEl.innerText = `${totalProfit > 0 ? '+' : ''}${(totalProfit/1000000).toFixed(2)} Tr`;
-            pnlEl.className = `text-sm font-bold ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            
+            document.getElementById('total-asset-val').innerText = formatNumber(totalAsset);
+        }
+
+        // 4. TRANSACTION MODAL LOGIC (QUAN TRỌNG)
+        function openTxModal(type, id) {
+            const modal = document.getElementById('txModal');
+            const title = document.getElementById('modalTitle');
+            const btn = document.getElementById('txConfirmBtn');
+            const item = type === 'buy' ? watchlist.find(i => i.id === id) : portfolio.find(i => i.id === id);
+            
+            if(!item) return;
+
+            currentTx = { type, id, item };
+            
+            // Điền sẵn dữ liệu gợi ý
+            if(type === 'buy') {
+                const res = calculateJIT(item);
+                document.getElementById('txPrice').value = item.ent;
+                document.getElementById('txVol').value = formatNumber(res.qSafe);
+                
+                title.innerText = `MUA ${item.sym}`;
+                title.className = "text-lg font-bold text-sky-400 mb-4 border-b border-slate-700 pb-2";
+                btn.className = "py-2 rounded bg-sky-600 text-white font-bold hover:bg-sky-500 shadow-lg";
+                btn.innerText = "XÁC NHẬN MUA";
+                btn.onclick = executeBuy;
+            } else {
+                document.getElementById('txPrice').value = mockMarketData[item.sym]?.price || item.buyPrice;
+                document.getElementById('txVol').value = formatNumber(item.vol);
+
+                title.innerText = `BÁN ${item.sym}`;
+                title.className = "text-lg font-bold text-rose-400 mb-4 border-b border-slate-700 pb-2";
+                btn.className = "py-2 rounded bg-rose-600 text-white font-bold hover:bg-rose-500 shadow-lg";
+                btn.innerText = "XÁC NHẬN BÁN";
+                btn.onclick = executeSell;
+            }
+
+            modal.classList.add('open');
+            updateTxCalc();
+        }
+
+        function updateTxCalc() {
+            const p = parseFloat(document.getElementById('txPrice').value) || 0;
+            const v = parseNumber(document.getElementById('txVol').value);
+            const total = p * v * 1000;
+            document.getElementById('txTotalCalc').innerText = `Giá trị GD: ${formatNumber(total)} VND`;
+        }
+
+        function closeModal() {
+            document.getElementById('txModal').classList.remove('open');
+            currentTx = null;
+        }
+
+        // THỰC HIỆN MUA (TRỪ TIỀN)
+        function executeBuy() {
+            const price = parseFloat(document.getElementById('txPrice').value);
+            const vol = parseNumber(document.getElementById('txVol').value);
+            const totalCost = price * vol * 1000;
+            let cash = parseNumber(document.getElementById('cashBalance').value);
+
+            if(totalCost > cash) {
+                alert("Không đủ tiền mặt để mua! (Margin call warning)");
+                return;
+            }
+
+            // 1. Trừ tiền
+            cash -= totalCost;
+            saveCash(cash);
+
+            // 2. Chuyển sang Portfolio
+            const newItem = { ...currentTx.item, buyPrice: price, vol: vol, buyDate: new Date() };
+            portfolio.unshift(newItem);
+            watchlist = watchlist.filter(i => i.id !== currentTx.id);
+
+            // 3. Save & Close
+            saveData();
+            closeModal();
+            switchTab('portfolio');
+            simulatePrices();
+        }
+
+        // THỰC HIỆN BÁN (CỘNG TIỀN)
+        function executeSell() {
+            const price = parseFloat(document.getElementById('txPrice').value);
+            const vol = parseNumber(document.getElementById('txVol').value); // Bán bao nhiêu
+            const totalRecieve = price * vol * 1000;
+            let cash = parseNumber(document.getElementById('cashBalance').value);
+
+            // 1. Cộng tiền
+            cash += totalRecieve;
+            saveCash(cash);
+
+            // 2. Xóa khỏi Portfolio (Hoặc giảm khối lượng - ở đây làm đơn giản là bán hết hoặc bán 1 phần)
+            // Logic đơn giản: Xóa luôn item cũ, nếu bán 1 phần thì tạo item mới (để sau nâng cấp)
+            // Hiện tại: Giả định bán hết cho gọn
+            portfolio = portfolio.filter(i => i.id !== currentTx.id);
+
+            // 3. Save & Close
+            saveData();
+            closeModal();
+            renderPortfolio();
         }
 
         // --- HELPER FUNC ---
@@ -264,30 +386,43 @@
             const ent = parseFloat(document.getElementById('entry').value);
             const tg = parseFloat(document.getElementById('target').value);
             const sl = parseFloat(document.getElementById('stoploss').value);
-            if(!sym || isNaN(ent) || isNaN(sl)) return alert("Nhập thiếu thông số rồi Việt ơi!");
-            
+            if(!sym || isNaN(ent)) return;
             watchlist.unshift({ id: Date.now(), sym, ent, tg, sl });
-            saveConfig(); switchTab('watchlist'); simulatePrices();
-        }
-        function moveToPortfolio(id) {
-            const item = watchlist.find(i => i.id === id);
-            if(item && confirm(`Xác nhận khớp lệnh ${item.sym}?`)) {
-                watchlist = watchlist.filter(i => i.id !== id);
-                portfolio.unshift(item);
-                saveConfig(); switchTab('portfolio'); simulatePrices();
-            }
+            saveData(); switchTab('watchlist'); simulatePrices();
         }
         function deleteItem(type, id) {
-            if(confirm('Xóa mã này?')) {
+            if(confirm('Xóa mã này khỏi list?')) {
                 if(type === 'w') watchlist = watchlist.filter(i => i.id !== id);
-                else portfolio = portfolio.filter(i => i.id !== id);
-                saveConfig();
+                saveData();
             }
         }
-        function saveConfig() {
+        function saveCash(val) {
+            document.getElementById('cashBalance').value = formatNumber(val);
+            localStorage.setItem('jitCash', val);
+        }
+        function updateCashManual() {
+            localStorage.setItem('jitCash', parseNumber(document.getElementById('cashBalance').value));
+            renderWatchlist(); // Re-calc buying power
+        }
+        function saveData() {
             localStorage.setItem('jitWatchlist', JSON.stringify(watchlist));
             localStorage.setItem('jitPortfolio', JSON.stringify(portfolio));
-            localStorage.setItem('jitNAV', document.getElementById('totalNAV').value);
+            renderWatchlist(); renderPortfolio();
+        }
+        
+        // MOCK DATA GENERATOR
+        function simulatePrices() {
+            const allItems = [...watchlist, ...portfolio];
+            allItems.forEach(item => {
+                const randomChange = (Math.random() * 0.05) - 0.025; 
+                const basePrice = item.buyPrice || item.ent;
+                const fakePrice = basePrice * (1 + randomChange);
+                mockMarketData[item.sym] = {
+                    price: parseFloat(fakePrice.toFixed(2)),
+                    change: (randomChange * 100).toFixed(2),
+                    color: fakePrice > basePrice ? 'text-up' : 'text-down'
+                };
+            });
             renderWatchlist(); renderPortfolio();
         }
     </script>
