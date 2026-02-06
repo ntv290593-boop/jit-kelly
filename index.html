@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIT Terminal Pro | Việt BOHO</title>
+    <title>JIT Terminal (Demo Mode) | Việt BOHO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -17,11 +17,6 @@
         .tab-content { display: none; height: 100%; }
         .tab-content.active { display: flex; flex-direction: column; }
         .text-up { color: #34d399; } .text-down { color: #f87171; } .text-ref { color: #fbbf24; }
-        
-        /* Loading Animation */
-        .loader { border: 2px solid #1e293b; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 12px; height: 12px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
@@ -30,13 +25,12 @@
 
     <nav class="h-12 border-b border-slate-800 flex justify-between items-center px-4 bg-[#0b1121]">
         <div class="flex items-center gap-2">
-            <span class="text-xl">⚡</span>
-            <h1 class="font-black text-sky-400 text-sm tracking-widest">JIT PRO <span class="text-white opacity-50 font-light">V5.1 FIX</span></h1>
+            <span class="text-xl">🛠️</span>
+            <h1 class="font-black text-sky-400 text-sm tracking-widest">JIT TERMINAL <span class="text-white opacity-50 font-light bg-slate-700 px-1 rounded">OFFLINE DEMO</span></h1>
         </div>
         <div class="flex items-center gap-3">
-            <span id="status-light" class="w-2 h-2 rounded-full bg-red-500" title="Trạng thái kết nối"></span>
-            <button onclick="updatePrices()" class="bg-blue-700 hover:bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded flex items-center gap-2 transition">
-                <span id="btn-icon">🔄</span> UPDATE
+            <button onclick="updatePrices()" class="bg-purple-700 hover:bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded flex items-center gap-2 transition animate-pulse">
+                🎲 SIMULATE PRICE (Giả lập)
             </button>
             <div class="flex items-center gap-1 border-l border-slate-700 pl-3">
                 <span class="text-[10px] text-slate-500">NAV:</span>
@@ -46,13 +40,28 @@
     </nav>
 
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        <div class="flex-[2] bg-black border-r border-slate-800 relative h-full hidden md:block">
-            <div id="tradingview_widget" class="h-full w-full"></div>
-             <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-            <script type="text/javascript">
-            new TradingView.widget({ "autosize": true, "symbol": "HOSE:HPG", "interval": "D", "timezone": "Asia/Ho_Chi_Minh", "theme": "dark", "style": "1", "locale": "vi", "enable_publishing": false, "container_id": "tradingview_widget" });
-            </script>
-        </div>
+        <div class="flex-[2] bg-black border-r border-slate-800 relative h-full hidden md:block" id="chart-container">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div id="tradingview_b7f5c" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+              <script type="text/javascript">
+              new TradingView.widget(
+              {
+              "autosize": true,
+              "symbol": "HOSE:HPG", // Mặc định mã HPG
+              "interval": "D",
+              "timezone": "Asia/Ho_Chi_Minh",
+              "theme": "dark",
+              "style": "1",
+              "locale": "vi_VN",
+              "enable_publishing": false,
+              "allow_symbol_change": true,
+              "container_id": "tradingview_b7f5c"
+              }
+              );
+              </script>
+            </div>
+            </div>
 
         <div class="w-full md:w-[420px] flex flex-col bg-[#0f172a] h-full shadow-xl z-10 border-l border-slate-800">
             <div class="flex border-b border-slate-800 bg-[#020617]">
@@ -79,7 +88,7 @@
                         + Thêm vào Watchlist
                     </button>
                 </div>
-                <div id="error-log" class="text-[10px] text-red-400 text-center hidden"></div>
+                <p class="text-[10px] text-slate-500 text-center">💡 Nhập mã xong chart bên trái sẽ không tự đổi đâu (Bản Offline mà). Hãy tự gõ mã vào chart nhé.</p>
             </div>
 
             <div id="view-watchlist" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
@@ -88,7 +97,7 @@
 
             <div id="view-portfolio" class="tab-content p-4 overflow-y-auto space-y-3 bg-[#0b1121]">
                  <div class="flex justify-between px-1 border-b border-slate-800 pb-2 mb-2">
-                     <span class="label-xs text-slate-400">Tổng PnL tạm tính</span>
+                     <span class="label-xs text-slate-400">Tổng PnL (Fake Data)</span>
                      <span id="total-pnl" class="text-sm font-bold text-white">---</span>
                  </div>
                 <div id="portfolio-container" class="space-y-3 pb-10"></div>
@@ -97,79 +106,47 @@
     </main>
 
     <script>
-        // ==========================================
-        // ⚠️ THAY LINK APPS SCRIPT MỚI VÀO ĐÂY ⚠️
-        const API_URL = "https://script.google.com/macros/s/AKfycbwzQambKv1QOa8CdPRbBvbp7JSwCtgiZQuKN0ZRnKEK8Z_7SbuuEyQAX9cbVgRmhAc2fA/exec";
-        // ==========================================
+        // --- CHẾ ĐỘ MOCK DATA (KHÔNG CẦN API) ---
+        // Biến này chứa giá giả lập
+        let mockMarketData = {}; 
 
         let watchlist = JSON.parse(localStorage.getItem('jitWatchlist')) || [];
         let portfolio = JSON.parse(localStorage.getItem('jitPortfolio')) || [];
-        let marketData = {}; 
 
         // INIT
         if(localStorage.getItem('jitNAV')) document.getElementById('totalNAV').value = localStorage.getItem('jitNAV');
-        renderWatchlist();
-        renderPortfolio();
         
-        // Auto update on load if link is present
-        if(API_URL.includes("script.google.com")) {
-            setTimeout(updatePrices, 1000);
-        } else {
-            document.getElementById('error-log').innerText = "⚠️ Chưa dán link Apps Script vào Code!";
-            document.getElementById('error-log').classList.remove('hidden');
+        // Tạo giá giả lần đầu
+        simulatePrices();
+        
+        // --- CORE FUNCTIONS ---
+
+        // Hàm giả lập giá thị trường (Thay vì gọi API)
+        function updatePrices() {
+            simulatePrices(); // Random giá mới
+            renderWatchlist();
+            renderPortfolio();
         }
 
-        // --- CORE FUNCTIONS ---
-        async function updatePrices() {
-            if(!API_URL.includes("script.google.com")) return alert("Việt ơi, chưa dán Link API vào code kìa!");
-
-            const btnIcon = document.getElementById('btn-icon');
-            const statusLight = document.getElementById('status-light');
-            btnIcon.innerHTML = `<span class="loader"></span>`;
-            statusLight.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
-
-            // Lấy danh sách mã duy nhất
-            const symbols = [...new Set([...watchlist.map(i=>i.sym), ...portfolio.map(i=>i.sym)])].join(',');
-            
-            if(!symbols) {
-                btnIcon.innerText = "🔄";
-                statusLight.className = "w-2 h-2 rounded-full bg-green-500";
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}?symbols=${symbols}`);
-                const data = await res.json();
+        function simulatePrices() {
+            const allItems = [...watchlist, ...portfolio];
+            allItems.forEach(item => {
+                // Random giá quanh mức Entry +/- 5%
+                const randomChange = (Math.random() * 0.1) - 0.05; // -5% to +5%
+                const fakePrice = item.ent * (1 + randomChange);
+                const fakeChangePercent = (randomChange * 100).toFixed(2);
                 
-                if(data.error) {
-                    throw new Error(data.error);
-                }
+                let color = 'text-ref';
+                if(fakePrice > item.ent) color = 'text-up';
+                if(fakePrice < item.ent) color = 'text-down';
 
-                if(data && data.data) {
-                    data.data.forEach(stock => {
-                        // Logic xác định màu
-                        let color = 'text-ref';
-                        if(stock.price > stock.refPrice) color = 'text-up';
-                        if(stock.price < stock.refPrice) color = 'text-down';
-
-                        marketData[stock.ticker] = {
-                            price: stock.price, // TCBS trả về giá (vd 28.15)
-                            change: stock.changePercent,
-                            color: color,
-                            ref: stock.refPrice
-                        };
-                    });
-                    renderWatchlist();
-                    renderPortfolio();
-                    statusLight.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]";
-                }
-            } catch(e) { 
-                console.error(e);
-                statusLight.className = "w-2 h-2 rounded-full bg-red-500";
-                alert("Lỗi cập nhật giá: " + e.message + "\nKiểm tra lại xem đã Deploy Apps Script chế độ 'Anyone' chưa?");
-            } finally {
-                btnIcon.innerText = "🔄";
-            }
+                mockMarketData[item.sym] = {
+                    price: parseFloat(fakePrice.toFixed(2)),
+                    change: fakeChangePercent,
+                    color: color
+                };
+            });
+            console.log("Đã random giá mới:", mockMarketData);
         }
 
         function calculateJIT(nav, item) {
@@ -181,11 +158,8 @@
             
             // Logic 1% Risk
             const riskAmt = nav * 0.01;
-            // qRisk = (Tiền rủi ro) / (Lỗ trên 1 cổ phiếu * 1000) -> Ra lô chẵn
             let qRisk = 0;
             if(risk > 0) qRisk = Math.floor((riskAmt / (risk * 1000)) / 100) * 100;
-            
-            // Logic Cash (Tiền mặt)
             const qCash = Math.floor((nav / (item.ent * 1000))/100) * 100;
             
             return { qSafe: Math.min(qRisk, qCash) };
@@ -197,15 +171,14 @@
             const container = document.getElementById('watchlist-container');
             
             if(watchlist.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Danh sách trống.<br>Nhập mã bên tab Hunter!</div>`;
+                container.innerHTML = `<div class="text-center text-slate-600 text-xs mt-8">Danh sách trống.<br>Nhập thử: HPG, SSI, VND</div>`;
                 return;
             }
 
             container.innerHTML = watchlist.map(i => {
                 const res = calculateJIT(nav, i);
-                const mkt = marketData[i.sym] || { price: 0, change: 0, color: 'text-white' };
+                const mkt = mockMarketData[i.sym] || { price: i.ent, change: 0, color: 'text-white' };
                 
-                // Highlight nếu giá về vùng mua (Giá TT <= Entry VÀ Giá TT > 0)
                 const isBuyZone = mkt.price > 0 && mkt.price <= i.ent;
                 
                 return `
@@ -216,12 +189,12 @@
                             <span class="text-[10px] text-slate-400 block">Entry: <b>${i.ent}</b> | SL: <b class="text-red-400">${i.sl}</b></span>
                         </div>
                         <div class="text-right">
-                            <div class="text-lg font-bold ${mkt.color}">${mkt.price > 0 ? mkt.price.toFixed(2) : '---'}</div>
-                            <div class="text-[9px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change > -999 ? mkt.change + '%' : '--'}</div>
+                            <div class="text-lg font-bold ${mkt.color}">${mkt.price}</div>
+                            <div class="text-[9px] ${mkt.change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mkt.change}%</div>
                         </div>
                     </div>
                     
-                    ${isBuyZone ? `<div class="my-2 text-center text-[10px] font-bold text-emerald-400 animate-pulse bg-emerald-900/50 rounded py-1">⚡ GIÁ ĐÃ VỀ VÙNG MUA! ⚡</div>` : ''}
+                    ${isBuyZone ? `<div class="my-2 text-center text-[10px] font-bold text-emerald-400 animate-pulse bg-emerald-900/50 rounded py-1">⚡ GIÁ VỀ VÙNG MUA! ⚡</div>` : ''}
 
                     <div class="mt-2 flex justify-between items-end border-t border-slate-700/50 pt-2">
                         <div>
@@ -250,9 +223,8 @@
 
             container.innerHTML = portfolio.map(i => {
                 const res = calculateJIT(nav, i);
-                const mkt = marketData[i.sym] || { price: i.ent, change: 0, color: 'text-slate-300' };
+                const mkt = mockMarketData[i.sym] || { price: i.ent, change: 0, color: 'text-slate-300' };
                 
-                // PnL = (Giá TT - Giá Vốn) * 1000 * Số lượng
                 const currentProfit = (mkt.price - i.ent) * 1000 * res.qSafe;
                 totalProfit += currentProfit;
                 
@@ -327,4 +299,3 @@
     </script>
 </body>
 </html>
-
