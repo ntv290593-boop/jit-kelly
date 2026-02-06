@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JIT Kelly Calculator | Việt BOHO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .card { background: #1e293b; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        input { background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 10px; color: white; width: 100%; }
+        .result-box { border-left: 4px solid #38bdf8; background: #0c4a6e; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold mb-6 text-sky-400 flex items-center gap-2">
+            📊 JIT Kelly Dashboard 🚀
+        </h1>
+        
+        <div class="card p-6 space-y-4">
+            <div>
+                <label class="block text-sm mb-1">Xác suất thắng (p) - %</label>
+                <input type="number" id="winRate" value="60" placeholder="Ví dụ: 60">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1">Giá mục tiêu (Target)</label>
+                    <input type="number" id="target" value="32" step="0.1">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Giá cắt lỗ (Stoploss)</label>
+                    <input type="number" id="stoploss" value="26.5" step="0.1">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Giá vào lệnh (Entry)</label>
+                <input type="number" id="entry" value="28" step="0.1">
+            </div>
+
+            <button onclick="calculate()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-lg transition">
+                TÍNH TOÁN VỊ THẾ 📈
+            </button>
+
+            <div id="result" class="hidden mt-6 p-4 result-box rounded-lg space-y-2">
+                <p class="text-sm">Tỷ lệ Lời/Lỗ (b): <span id="odds" class="font-bold text-yellow-400">0</span></p>
+                <p class="text-lg">Tỷ lệ Kelly: <span id="kelly" class="font-bold text-green-400">0%</span></p>
+                <p class="text-lg">Khuyên dùng (Half-Kelly): <span id="halfKelly" class="font-bold text-sky-400">0%</span></p>
+                <p id="advice" class="text-xs italic text-gray-400 mt-2"></p>
+            </div>
+        </div>
+        
+        <p class="text-center text-gray-500 text-xs mt-8">Build for Việt BOHO - Costing Team Lead 🛠️</p>
+    </div>
+
+    <script>
+        function calculate() {
+            const p = document.getElementById('winRate').value / 100;
+            const target = document.getElementById('target').value;
+            const stoploss = document.getElementById('stoploss').value;
+            const entry = document.getElementById('entry').value;
+
+            const reward = target - entry;
+            const risk = entry - stoploss;
+            
+            if (risk <= 0) {
+                alert("Giá cắt lỗ phải thấp hơn giá vào lệnh!");
+                return;
+            }
+
+            const b = reward / risk;
+            const f = (p * (b + 1) - 1) / b;
+            
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('odds').innerText = b.toFixed(2);
+            
+            const kellyVal = (f * 100).toFixed(2);
+            document.getElementById('kelly').innerText = (f > 0 ? kellyVal : 0) + "%";
+            document.getElementById('halfKelly').innerText = (f > 0 ? (kellyVal / 2).toFixed(2) : 0) + "%";
+            
+            const advice = document.getElementById('advice');
+            if (f <= 0) {
+                advice.innerText = "❌ Kèo này xác suất/tỷ lệ không tốt. Bỏ qua!";
+                advice.className = "text-xs italic text-red-400 mt-2";
+            } else {
+                advice.innerText = "✅ Kèo đạt chuẩn JIT. Hãy quản trị vốn chặt chẽ!";
+                advice.className = "text-xs italic text-green-400 mt-2";
+            }
+        }
+    </script>
+</body>
+</html>
