@@ -168,40 +168,43 @@
         }
 
         // --- HÀM LƯU VÀ HIỂN THỊ ---
+        // --- HÀM LƯU VÀ HIỂN THỊ (ĐÃ FIX LOGIC) ---
         function saveAndRender() {
-            // A. Lưu dữ liệu vào trình duyệt
+            // A. Lưu dữ liệu
             localStorage.setItem('jitPortfolio', JSON.stringify(portfolio));
-            
-            // Lưu số vốn NAV hiện tại
             const navInput = document.getElementById('totalNAV').value;
             localStorage.setItem('jitNAV', navInput);
             
-            // B. Tính toán hiển thị
+            // B. Tính toán
             const nav = parseFloat(navInput);
             const list = document.getElementById('portfolioList');
-            const riskAmount = nav * 0.01; // Rủi ro tối đa 1% NAV
+            const riskAmount = nav * 0.01; // Rủi ro 1% NAV
 
             document.getElementById('countMã').innerText = portfolio.length;
             
             if (portfolio.length === 0) {
-                list.innerHTML = `<div class="text-center text-slate-600 text-xs py-8">Chưa có mã nào.<br>Nhập thông số ở trên để tính toán! 🚀</div>`;
+                list.innerHTML = `<div class="text-center text-slate-600 text-xs py-8">Chưa có mã nào.<br>Nhập thông số để tính toán! 🚀</div>`;
                 return;
             }
 
             list.innerHTML = portfolio.map(i => {
-                // Logic 1: Mua theo rủi ro 1% NAV
                 const lossPerShare = i.ent - i.sl;
-                // Làm tròn xuống hàng trăm (ví dụ 1234 -> 1200) cho chẵn lô
-                const quantity1Percent = Math.floor((riskAmount / lossPerShare) / 100) * 100;
-                const value1Percent = quantity1Percent * i.ent;
+                
+                // 1. Tính khối lượng theo rủi ro 1% (Risk Based)
+                let rawQ_Risk = riskAmount / (lossPerShare * 1000); 
+                
+                // 2. Tính khối lượng tối đa mua được bằng tiền mặt (Cash Based)
+                let rawQ_Cash = (nav / (i.ent * 1000));
 
-                // Logic 2: Mua theo Kelly (Half-Kelly)
+                // 3. Lấy số nhỏ hơn để không bị Call Margin (Safe Quantity)
+                // Làm tròn xuống lô 100
+                const finalQuantity = Math.floor(Math.min(rawQ_Risk, rawQ_Cash) * 10) * 100;
+                
+                const finalValue = finalQuantity * i.ent * 1000;
+
+                // Kelly Logic (Tham khảo)
+                const halfKellyPercent = (i.k * 50).toFixed(1);
                 const halfKellyValue = nav * (i.k * 0.5);
-                const halfKellyQuantity = Math.floor((halfKellyValue / i.ent) / 100) * 100;
-
-                // Chọn phương án an toàn hơn (Min giữa 2 cách)
-                const safeQuantity = Math.min(quantity1Percent, halfKellyQuantity);
-                const isKellyBetter = halfKellyValue > 0 && halfKellyValue < value1Percent;
 
                 return `
                 <div class="glass-card p-4 rounded-xl border-l-4 ${i.k > 0 ? 'border-sky-500' : 'border-rose-500'} bg-[#131c31]">
@@ -215,14 +218,14 @@
                     
                     <div class="grid grid-cols-2 gap-3 border-t border-slate-800/80 pt-3 mb-2">
                         <div>
-                            <p class="label-xs text-emerald-400 mb-0.5">Vùng mua an toàn (1%)</p>
-                            <p class="text-xl font-bold text-white">${quantity1Percent.toLocaleString()} <span class="text-[10px] font-normal text-slate-500">CP</span></p>
-                            <p class="text-[10px] text-slate-500">Giá trị: ${(value1Percent/1000000).toFixed(1)} Tỷ</p>
+                            <p class="label-xs text-emerald-400 mb-0.5">MUA KHUYẾN NGHỊ (1% Risk)</p>
+                            <p class="text-xl font-bold text-white">${finalQuantity.toLocaleString()} <span class="text-[10px] font-normal text-slate-500">CP</span></p>
+                            <p class="text-[10px] text-slate-500">Giá trị: ${(finalValue/1000000).toLocaleString('vi-VN', {maximumFractionDigits: 1})} Tr</p>
                         </div>
                         <div class="text-right opacity-60 hover:opacity-100 transition">
                             <p class="label-xs text-sky-400 mb-0.5">Kelly Max (50%)</p>
-                            <p class="text-sm font-bold text-sky-400">${(i.k * 50).toFixed(1)}% NAV</p>
-                            <p class="text-[10px] text-slate-500">≈ ${(halfKellyValue/1000000).toFixed(1)} Tỷ</p>
+                            <p class="text-sm font-bold text-sky-400">${halfKellyPercent}% NAV</p>
+                            <p class="text-[10px] text-slate-500">≈ ${(halfKellyValue/1000000).toLocaleString('vi-VN', {maximumFractionDigits: 1})} Tr</p>
                         </div>
                     </div>
 
@@ -250,3 +253,4 @@
     </script>
 </body>
 </html>
+
